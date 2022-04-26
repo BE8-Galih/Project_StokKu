@@ -1,0 +1,11 @@
+ERROR		
+        type response struct {
+			Code     int
+			Messages string
+			Status   string
+		}
+		var resp response
+
+		json.Unmarshal([]byte(res.Body.Bytes()), &resp)
+		assert.Equal(t, "Failed", resp.Status)
+		assert.Equal(t, 500, resp.Code)
