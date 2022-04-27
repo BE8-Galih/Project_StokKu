@@ -239,13 +239,8 @@ func (u *ItemController) History() echo.HandlerFunc {
 		AllHistory, err := u.Repo.GetAllHistory()
 
 		if err != nil {
-			if err.Error() == "Data Is Empty" {
-				log.Warn("Data Is Empty")
-				return c.JSON(http.StatusNotFound, view.DataEmpty())
-			} else {
-				log.Warn("Cannot Access Database")
-				return c.JSON(http.StatusInternalServerError, view.InternalServerError())
-			}
+			log.Warn("Cannot Access Database")
+			return c.JSON(http.StatusInternalServerError, view.InternalServerError())
 		}
 		log.Info()
 

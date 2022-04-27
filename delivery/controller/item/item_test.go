@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"stokku/delivery/controller"
 	"stokku/delivery/view/item"
 	"stokku/entities"
 	"strings"
@@ -12,19 +13,33 @@ import (
 
 	"github.com/go-playground/validator"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/stretchr/testify/assert"
 )
+
+var token string
+
+func TestCreateJWT(t *testing.T) {
+	t.Run("Create JWT", func(t *testing.T) {
+		token, _ = controller.CreateToken(3)
+	})
+}
 
 func TestGetAllItem(t *testing.T) {
 	t.Run("Get All Success", func(t *testing.T) {
 		e := echo.New()
+
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		req.Header.Set(echo.HeaderAuthorization, "Bearer "+token)
 		res := httptest.NewRecorder()
 		context := e.NewContext(req, res)
 		context.SetPath("/items")
 
 		itemController := NewItemControl(&mockItemRepository{}, validator.New())
-		itemController.GetAllItem()(context)
+
+		middleware.JWTWithConfig(middleware.JWTConfig{SigningMethod: "HS256", SigningKey: []byte("K3YT0K3N")})(itemController.GetAllItem())(context)
+
 		type response struct {
 			Code     int
 			Messages string
@@ -39,12 +54,15 @@ func TestGetAllItem(t *testing.T) {
 	t.Run("error Get All Item", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		req.Header.Set(echo.HeaderAuthorization, "Bearer "+token)
 		res := httptest.NewRecorder()
 		context := e.NewContext(req, res)
 		context.SetPath("/items")
 
 		itemController := NewItemControl(&errMockItemRep{}, validator.New())
-		itemController.GetAllItem()(context)
+
+		middleware.JWTWithConfig(middleware.JWTConfig{SigningMethod: "HS256", SigningKey: []byte("K3YT0K3N")})(itemController.GetAllItem())(context)
 
 		type response struct {
 			Code     int
@@ -64,6 +82,7 @@ func TestGetItemID(t *testing.T) {
 		e := echo.New()
 
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set(echo.HeaderAuthorization, "Bearer "+token)
 		res := httptest.NewRecorder()
 		context := e.NewContext(req, res)
 		context.SetPath("/items/:id")
@@ -71,7 +90,7 @@ func TestGetItemID(t *testing.T) {
 		context.SetParamValues("1")
 
 		itemController := NewItemControl(&mockItemRepository{}, validator.New())
-		itemController.GetItemID()(context)
+		middleware.JWTWithConfig(middleware.JWTConfig{SigningMethod: "HS256", SigningKey: []byte("K3YT0K3N")})(itemController.GetItemID())(context)
 
 		type respondGetitem struct {
 			Code    int
@@ -87,13 +106,14 @@ func TestGetItemID(t *testing.T) {
 	t.Run("Error Convert String", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set(echo.HeaderAuthorization, "Bearer "+token)
 		res := httptest.NewRecorder()
 		context := e.NewContext(req, res)
 		context.SetPath("/items/:id")
 		context.SetParamNames("id")
 		context.SetParamValues("satu")
 		itemController := NewItemControl(&errMockItemRep{}, validator.New())
-		itemController.GetItemID()(context)
+		middleware.JWTWithConfig(middleware.JWTConfig{SigningMethod: "HS256", SigningKey: []byte("K3YT0K3N")})(itemController.GetItemID())(context)
 
 		type ErrRespon struct {
 			Code    int
@@ -109,13 +129,15 @@ func TestGetItemID(t *testing.T) {
 	t.Run("Error Not Found item", func(t *testing.T) {
 		e := echo.New()
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set(echo.HeaderAuthorization, "Bearer "+token)
 		res := httptest.NewRecorder()
 		context := e.NewContext(req, res)
 		context.SetPath("/items/:id")
 		context.SetParamNames("id")
 		context.SetParamValues("1")
 		itemController := NewItemControl(&errMockItemRep{}, validator.New())
-		itemController.GetItemID()(context)
+		middleware.JWTWithConfig(middleware.JWTConfig{SigningMethod: "HS256", SigningKey: []byte("K3YT0K3N")})(itemController.GetItemID())(context)
+
 		type ErrRespon struct {
 			Code    int
 			Message string
@@ -247,6 +269,7 @@ func TestUpdateItem(t *testing.T) {
 		})
 		req := httptest.NewRequest(http.MethodPut, "/", strings.NewReader(string(requestBody)))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.Header.Set(echo.HeaderAuthorization, "Bearer "+token)
 		res := httptest.NewRecorder()
 		context := e.NewContext(req, res)
 		context.SetPath("/items/:id")
@@ -254,7 +277,7 @@ func TestUpdateItem(t *testing.T) {
 		context.SetParamValues("2")
 
 		itemController := NewItemControl(&mockItemRepository{}, validator.New())
-		itemController.UpdateItem()(context)
+		middleware.JWTWithConfig(middleware.JWTConfig{SigningMethod: "HS256", SigningKey: []byte("K3YT0K3N")})(itemController.UpdateItem())(context)
 		type UpdateRespon struct {
 			Code    int
 			Message string
@@ -282,13 +305,14 @@ func TestUpdateItem(t *testing.T) {
 		})
 		req := httptest.NewRequest(http.MethodPut, "/", strings.NewReader(string(requestBody)))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.Header.Set(echo.HeaderAuthorization, "Bearer "+token)
 		res := httptest.NewRecorder()
 		context := e.NewContext(req, res)
 		context.SetPath("/items/:id")
 		context.SetParamNames("id")
 		context.SetParamValues("1")
 		itemController := NewItemControl(&errMockItemRep{}, validator.New())
-		itemController.UpdateItem()(context)
+		middleware.JWTWithConfig(middleware.JWTConfig{SigningMethod: "HS256", SigningKey: []byte("K3YT0K3N")})(itemController.UpdateItem())(context)
 
 		type errUpdate struct {
 			Code     int
@@ -307,12 +331,14 @@ func TestUpdateItem(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodPut, "/", strings.NewReader(string(requestBody)))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.Header.Set(echo.HeaderAuthorization, "Bearer "+token)
+
 		res := httptest.NewRecorder()
 		context := e.NewContext(req, res)
 		context.SetPath("/items")
 
 		itemController := NewItemControl(&errMockItemRep{}, validator.New())
-		itemController.UpdateItem()(context)
+		middleware.JWTWithConfig(middleware.JWTConfig{SigningMethod: "HS256", SigningKey: []byte("K3YT0K3N")})(itemController.UpdateItem())(context)
 		type response struct {
 			Code    int
 			Message string
@@ -331,13 +357,15 @@ func TestUpdateItem(t *testing.T) {
 		})
 		req := httptest.NewRequest(http.MethodPut, "/", strings.NewReader(string(requestBody)))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.Header.Set(echo.HeaderAuthorization, "Bearer "+token)
+
 		res := httptest.NewRecorder()
 		context := e.NewContext(req, res)
 		context.SetPath("/items/:id")
 		context.SetParamNames("id")
 		context.SetParamValues("satu")
 		itemController := NewItemControl(&errMockItemRep{}, validator.New())
-		itemController.UpdateItem()(context)
+		middleware.JWTWithConfig(middleware.JWTConfig{SigningMethod: "HS256", SigningKey: []byte("K3YT0K3N")})(itemController.UpdateItem())(context)
 
 		type ErrRespon struct {
 			Code    int
@@ -359,13 +387,14 @@ func TestDeleteItem(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodDelete, "/", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.Header.Set(echo.HeaderAuthorization, "Bearer "+token)
 		res := httptest.NewRecorder()
 		context := e.NewContext(req, res)
 		context.SetPath("/items/:id")
 		context.SetParamNames("id")
 		context.SetParamValues("1")
 		itemController := NewItemControl(&mockItemRepository{}, validator.New())
-		itemController.DeleteItem()(context)
+		middleware.JWTWithConfig(middleware.JWTConfig{SigningMethod: "HS256", SigningKey: []byte("K3YT0K3N")})(itemController.DeleteItem())(context)
 
 		type responDelete struct {
 			Code    int
@@ -384,13 +413,14 @@ func TestDeleteItem(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodDelete, "/", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.Header.Set(echo.HeaderAuthorization, "Bearer "+token)
 		res := httptest.NewRecorder()
 		context := e.NewContext(req, res)
 		context.SetPath("/items/:id")
 		context.SetParamNames("id")
 		context.SetParamValues("1")
 		itemController := NewItemControl(&errMockItemRep{}, validator.New())
-		itemController.DeleteItem()(context)
+		middleware.JWTWithConfig(middleware.JWTConfig{SigningMethod: "HS256", SigningKey: []byte("K3YT0K3N")})(itemController.DeleteItem())(context)
 
 		type response struct {
 			Code     int
@@ -408,13 +438,14 @@ func TestDeleteItem(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodDelete, "/", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.Header.Set(echo.HeaderAuthorization, "Bearer "+token)
 		res := httptest.NewRecorder()
 		context := e.NewContext(req, res)
 		context.SetPath("/items/:id")
 		context.SetParamNames("id")
 		context.SetParamValues("satu")
 		itemController := NewItemControl(&errMockItemRep{}, validator.New())
-		itemController.DeleteItem()(context)
+		middleware.JWTWithConfig(middleware.JWTConfig{SigningMethod: "HS256", SigningKey: []byte("K3YT0K3N")})(itemController.DeleteItem())(context)
 
 		type ErrRespon struct {
 			Code    int
@@ -427,6 +458,164 @@ func TestDeleteItem(t *testing.T) {
 		assert.Equal(t, 500, Err.Code)
 		assert.Equal(t, "Failed", Err.Status)
 		assert.Equal(t, "Cannot Convert ID", Err.Message)
+	})
+}
+
+func TestSellItem(t *testing.T) {
+
+}
+
+func TestBuyItem(t *testing.T) {
+
+}
+
+func TestHistory(t *testing.T) {
+	t.Run("Success Get History", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.Header.Set(echo.HeaderAuthorization, "Bearer "+token)
+		res := httptest.NewRecorder()
+		context := e.NewContext(req, res)
+		context.SetPath("/items")
+		itemController := NewItemControl(&mockItemRepository{}, validator.New())
+		middleware.JWTWithConfig(middleware.JWTConfig{SigningMethod: "HS256", SigningKey: []byte("K3YT0K3N")})(itemController.History())(context)
+		type responHistory struct {
+			Code    int
+			Message string
+			Status  string
+			Data    interface{}
+		}
+
+		var respon responHistory
+		json.Unmarshal([]byte(res.Body.Bytes()), &respon)
+		assert.Equal(t, 200, respon.Code)
+		assert.Equal(t, "Success", respon.Status)
+		assert.NotNil(t, respon.Data)
+	})
+	t.Run("Error Get History", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.Header.Set(echo.HeaderAuthorization, "Bearer "+token)
+		res := httptest.NewRecorder()
+		context := e.NewContext(req, res)
+		context.SetPath("/items")
+		itemController := NewItemControl(&errMockItemRep{}, validator.New())
+		middleware.JWTWithConfig(middleware.JWTConfig{SigningMethod: "HS256", SigningKey: []byte("K3YT0K3N")})(itemController.History())(context)
+
+		type response struct {
+			Code     int
+			Messages string
+			Status   string
+		}
+		var resp response
+
+		json.Unmarshal([]byte(res.Body.Bytes()), &resp)
+		assert.Equal(t, "Failed", resp.Status)
+		assert.Equal(t, 500, resp.Code)
+	})
+}
+
+func TestHistorySell(t *testing.T) {
+	t.Run("Success Get Sell History", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.Header.Set(echo.HeaderAuthorization, "Bearer "+token)
+		res := httptest.NewRecorder()
+		context := e.NewContext(req, res)
+		context.SetPath("/items")
+		itemController := NewItemControl(&mockItemRepository{}, validator.New())
+		middleware.JWTWithConfig(middleware.JWTConfig{SigningMethod: "HS256", SigningKey: []byte("K3YT0K3N")})(itemController.HistorySell())(context)
+
+		type responHistory struct {
+			Code    int
+			Message string
+			Status  string
+			Data    interface{}
+		}
+
+		var respon responHistory
+		json.Unmarshal([]byte(res.Body.Bytes()), &respon)
+		assert.Equal(t, 200, respon.Code)
+		assert.Equal(t, "Success", respon.Status)
+		assert.NotNil(t, respon.Data)
+	})
+	t.Run("Error Get Sell", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.Header.Set(echo.HeaderAuthorization, "Bearer "+token)
+		res := httptest.NewRecorder()
+		context := e.NewContext(req, res)
+		context.SetPath("/items")
+		itemController := NewItemControl(&errMockItemRep{}, validator.New())
+		middleware.JWTWithConfig(middleware.JWTConfig{SigningMethod: "HS256", SigningKey: []byte("K3YT0K3N")})(itemController.HistorySell())(context)
+
+		type response struct {
+			Code     int
+			Messages string
+			Status   string
+		}
+		var resp response
+
+		json.Unmarshal([]byte(res.Body.Bytes()), &resp)
+		assert.Equal(t, "Failed", resp.Status)
+		assert.Equal(t, 500, resp.Code)
+	})
+}
+
+func TestHistoryBuy(t *testing.T) {
+	t.Run("Success Get Buy History", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.Header.Set(echo.HeaderAuthorization, "Bearer "+token)
+		res := httptest.NewRecorder()
+		context := e.NewContext(req, res)
+		context.SetPath("/items")
+		itemController := NewItemControl(&mockItemRepository{}, validator.New())
+		middleware.JWTWithConfig(middleware.JWTConfig{SigningMethod: "HS256", SigningKey: []byte("K3YT0K3N")})(itemController.HistoryBuy())(context)
+		type responHistory struct {
+			Code    int
+			Message string
+			Status  string
+			Data    interface{}
+		}
+
+		var respon responHistory
+		json.Unmarshal([]byte(res.Body.Bytes()), &respon)
+		assert.Equal(t, 200, respon.Code)
+		assert.Equal(t, "Success", respon.Status)
+		assert.NotNil(t, respon.Data)
+	})
+	t.Run("Error Get Buy", func(t *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.Header.Set(echo.HeaderAuthorization, "Bearer "+token)
+		res := httptest.NewRecorder()
+		context := e.NewContext(req, res)
+		context.SetPath("/items")
+		itemController := NewItemControl(&errMockItemRep{}, validator.New())
+		middleware.JWTWithConfig(middleware.JWTConfig{SigningMethod: "HS256", SigningKey: []byte("K3YT0K3N")})(itemController.HistoryBuy())(context)
+		type response struct {
+			Code     int
+			Messages string
+			Status   string
+		}
+		var resp response
+
+		json.Unmarshal([]byte(res.Body.Bytes()), &resp)
+		assert.Equal(t, "Failed", resp.Status)
+		assert.Equal(t, 500, resp.Code)
 	})
 }
 
@@ -475,17 +664,16 @@ func (m *mockItemRepository) AddHistoryItem(newHistory entities.HistoryItem) (en
 }
 
 func (m *mockItemRepository) GetAllHistory() ([]entities.HistoryItem, error) {
-	return []entities.HistoryItem{}, nil
+	return []entities.HistoryItem{{Name: "Pembelian", ItemName: "Baju", Qty: 8}}, nil
 
 }
 
 func (m *mockItemRepository) HistorySell(name string) ([]entities.HistoryItem, error) {
-	return []entities.HistoryItem{}, nil
-
+	return []entities.HistoryItem{{Name: "Pembelian", ItemName: "Baju", Qty: 8}}, nil
 }
 
 func (m *mockItemRepository) HistoryBuy(name string) ([]entities.HistoryItem, error) {
-	return []entities.HistoryItem{}, nil
+	return []entities.HistoryItem{{Name: "Penjualan", ItemName: "Celana", Qty: 8}}, nil
 
 }
 
@@ -533,16 +721,15 @@ func (m *errMockItemRep) AddHistoryItem(newHistory entities.HistoryItem) (entiti
 }
 
 func (m *errMockItemRep) GetAllHistory() ([]entities.HistoryItem, error) {
-	return []entities.HistoryItem{}, nil
+	return []entities.HistoryItem{}, errors.New("Error Access Database")
 
 }
 
 func (m *errMockItemRep) HistorySell(name string) ([]entities.HistoryItem, error) {
-	return []entities.HistoryItem{}, nil
+	return []entities.HistoryItem{}, errors.New("Error Access Database")
 
 }
 
 func (m *errMockItemRep) HistoryBuy(name string) ([]entities.HistoryItem, error) {
-	return []entities.HistoryItem{}, nil
-
+	return []entities.HistoryItem{}, errors.New("Error Access Database")
 }
