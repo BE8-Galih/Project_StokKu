@@ -162,7 +162,7 @@ func (u ItemController) BuyItem() echo.HandlerFunc {
 		}
 		ID := controller.ConsumeJWT(c)
 
-		AddHistory, errAdd := u.Repo.BuyItem(item, ID, float64(item.Qty))
+		AddHistory, errAdd := u.Repo.BuyItem(item, ID, item.Qty)
 
 		if errAdd != nil {
 			log.Warn("Cannot Access Database")
