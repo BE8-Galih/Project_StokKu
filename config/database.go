@@ -11,13 +11,7 @@ import (
 func ConnectDB(config AppConfig) *gorm.DB {
 	var dsn string
 	//Membuat alamat Database
-	dsn = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True",
-		config.Username,
-		config.Password,
-		config.Host,
-		config.DBPort,
-		config.DBName,
-	)
+	dsn = "root:Kuroko25nara@tcp(db-learn.cb8meadbge6r.ap-southeast-1.rds.amazonaws.com:3306)/Stokku?charset=utf8mb4&parseTime=True"
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal(err.Error())
