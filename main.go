@@ -18,8 +18,6 @@ func main() {
 	databaseAddress := config.AppInit()
 	Database := config.ConnectDB(*databaseAddress)
 
-	// Database.AutoMigrate(&entities.User{}, &entities.Item{}, &entities.HistoryItem{})
-
 	// Menghubungkan File Repo User dengan File Controller User
 	UserRepo := user.NewDBUser(Database)
 	UserControl := userC.NewUserControl(UserRepo, validator.New())
