@@ -11,8 +11,9 @@ import (
 func ConnectDB(config AppConfig) *gorm.DB {
 	var dsn string
 	//Membuat alamat Database
-	dsn = fmt.Sprintf("%s:@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True",
+	dsn = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True",
 		config.Username,
+		config.Password,
 		config.Host,
 		config.DBPort,
 		config.DBName,
