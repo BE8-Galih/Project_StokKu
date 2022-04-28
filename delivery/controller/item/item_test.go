@@ -648,8 +648,8 @@ func (m *mockItemRepository) SelectItem(item item.TransactionItem) (entities.Ite
 
 }
 
-func (m *mockItemRepository) BuyItem(itemBuy entities.Item, qty int) (entities.Item, error) {
-	return entities.Item{}, nil
+func (m *mockItemRepository) BuyItem(itemBuy item.TransactionItem, id float64, qty int) (entities.HistoryItem, error) {
+	return entities.HistoryItem{}, nil
 
 }
 
@@ -705,8 +705,8 @@ func (m *errMockItemRep) SelectItem(item item.TransactionItem) (entities.Item, e
 
 }
 
-func (m *errMockItemRep) BuyItem(itemBuy entities.Item, qty int) (entities.Item, error) {
-	return entities.Item{}, nil
+func (m *errMockItemRep) BuyItem(itemBuy item.TransactionItem, id float64, qty int) (entities.HistoryItem, error) {
+	return entities.HistoryItem{}, nil
 
 }
 

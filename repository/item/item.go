@@ -83,14 +83,27 @@ func (u *ItemsDB) SelectItem(itemBuy item.TransactionItem) (entities.Item, error
 }
 
 // Method Untuk Melakukan Update Data Qty Stok Item di Database Ketika Terjadi Pembelian
-func (u *ItemsDB) BuyItem(itemBuy entities.Item, qty int) (entities.Item, error) {
+func (u *ItemsDB) BuyItem(itemBuy item.TransactionItem, id float64, qty int) (entities.HistoryItem, error) {
+
+	selectItem, errSelect := u.SelectItem(itemBuy)
+
+	if errSelect != nil {
+		log.Warn("Cannot Access Database")
+		return entities.HistoryItem{}, errors.New("Cannot Access Database")
+	}
 
 	UpdateItem := entities.Item{}
-	if err := u.Db.Where("name = ?", itemBuy.Name).Updates(entities.Item{Name: itemBuy.Name, Stocks: itemBuy.Stocks + qty}).Find(&UpdateItem).Error; err != nil {
+	if err := u.Db.Where("name = ?", selectItem.Name).Updates(entities.Item{Name: selectItem.Name, Stocks: selectItem.Stocks + qty}).Find(&UpdateItem).Error; err != nil {
 		log.Warn(err)
-		return UpdateItem, errors.New("Error Updating Data")
+		return entities.HistoryItem{}, errors.New("Error Updating Data")
 	}
-	return UpdateItem, nil
+	NewHistoryItem := entities.HistoryItem{Name: "Pembelian", ItemName: UpdateItem.Name, Qty: qty, UserID: uint(int(id)), ItemID: UpdateItem.ID}
+	AddHistory, errAdd := u.AddHistoryItem(NewHistoryItem)
+	if errAdd != nil {
+		log.Warn("Cannot Access Database")
+		return entities.HistoryItem{}, errors.New("Cannot Access Database")
+	}
+	return AddHistory, nil
 }
 
 // Method Untuk Melakukan Update Data Qty Stok Item di Database Ketika Terjadi Penjualan
@@ -119,10 +132,6 @@ func (u *ItemsDB) GetAllHistory() ([]entities.HistoryItem, error) {
 	if err := u.Db.Where("created_at > DATE_SUB(?, INTERVAL 7 DAY)", time.Now()).Find(&HistoryTrasaction).Error; err != nil {
 		log.Warn(err)
 		return []entities.HistoryItem{}, errors.New("Error Access Database")
-	}
-	if len(HistoryTrasaction) == 0 {
-		log.Warn("Data Is Empty")
-		return nil, errors.New("Data Is Empty")
 	}
 	log.Info()
 	return HistoryTrasaction, nil

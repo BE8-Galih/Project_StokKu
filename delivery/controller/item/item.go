@@ -160,26 +160,9 @@ func (u ItemController) BuyItem() echo.HandlerFunc {
 		if err := u.valid.Struct(&item); err != nil {
 			return c.JSON(http.StatusInternalServerError, view.Validate())
 		}
-		fmt.Println(item)
-
-		selectItem, errSelect := u.Repo.SelectItem(item)
-
-		if errSelect != nil {
-			log.Warn("Cannot Access Database")
-			return c.JSON(http.StatusInternalServerError, view.InternalServerError())
-		}
-
 		ID := controller.ConsumeJWT(c)
 
-		res, errBuy := u.Repo.BuyItem(selectItem, item.Qty)
-		if errBuy != nil {
-			log.Warn("Cannot Access Database")
-			return c.JSON(http.StatusInternalServerError, view.InternalServerError())
-		}
-
-		NewHistoryItem := entities.HistoryItem{Name: "Pembelian", ItemName: res.Name, Qty: item.Qty, UserID: uint(int(ID)), ItemID: res.ID}
-
-		AddHistory, errAdd := u.Repo.AddHistoryItem(NewHistoryItem)
+		AddHistory, errAdd := u.Repo.BuyItem(item, ID, float64(item.Qty))
 
 		if errAdd != nil {
 			log.Warn("Cannot Access Database")
